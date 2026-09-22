@@ -1,0 +1,55 @@
+# Agent Monitor Bridge
+
+Small agent-agnostic service that accepts normalized status events over HTTP
+and publishes retained MQTT messages for the ESP32 monitor.
+
+## Run locally
+
+```powershell
+cd software
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[test]"
+Copy-Item .env.example .env
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Set `MQTT_HOST` in `.env` to the broker reachable by both this service and the
+ESP32. The service reconnects in the background and reports MQTT readiness at
+`GET /health`.
+
+## Publish a state
+
+```powershell
+$body = @{
+  id = "codex-m3u8"
+  name = "Codex / M3U8"
+  host = "desktop"
+  state = "needs_input"
+  detail = "Approve command"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri http://localhost:8000/v1/agents/state `
+  -ContentType application/json `
+  -Body $body
+```
+
+The bridge publishes the validated payload with QoS 1 and `retain=true` to:
+
+```text
+agent-monitor/v1/agents/<agent-id>/state
+```
+
+Allowed states: `offline`, `idle`, `thinking`, `tool_running`, `needs_input`,
+`turn_complete`, and `error`.
+
+The V1 API has no authentication or TLS. Keep it on a trusted LAN or place it
+behind an authenticated reverse proxy; do not expose port 8000 directly to the
+public internet.
+
+## Test
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest
+```

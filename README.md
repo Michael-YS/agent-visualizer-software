@@ -6,6 +6,10 @@ and publishes retained MQTT messages for the ESP32 monitor.
 ## Repository layout
 
 - `app/`, `tests/`, and `pyproject.toml`: HTTP-to-MQTT bridge.
+- [status.schema.json](status.schema.json) and [INTEGRATION.md](INTEGRATION.md):
+  harness-independent contract and instructions for generating your own hooks.
+- [skills/integrate-agent-monitor/](skills/integrate-agent-monitor/SKILL.md):
+  give this skill to an agent in the target harness to implement and verify its integration.
 - [adapters/](adapters/README.md): independently installable harness adapters.
 
 Firmware, wiring and the device plan live in `agent-visualizer-hardware`.

@@ -1,5 +1,10 @@
 # Agent Monitor adapters
 
+To generate hooks for another harness, start with the shared
+[schema and integration contract](../INTEGRATION.md) and
+[integration skill](../skills/integrate-agent-monitor/SKILL.md).
+The projects below are optional reference implementations.
+
 Each harness is an independent project. Install, build and test from its own
 directory; no adapter imports code from a sibling. All publish the existing
 six-field status protocol to the bridge at this repository root (`../` from this directory).

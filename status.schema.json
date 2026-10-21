@@ -1,0 +1,70 @@
+{
+  "$defs": {
+    "AgentState": {
+      "enum": [
+        "offline",
+        "idle",
+        "thinking",
+        "tool_running",
+        "needs_input",
+        "turn_complete",
+        "error"
+      ],
+      "title": "AgentState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "maxLength": 96,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "title": "Id",
+      "type": "string",
+      "description": "Must contain non-whitespace text."
+    },
+    "name": {
+      "maxLength": 96,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string",
+      "x-maxUtf8Bytes": 96,
+      "description": "Must contain non-whitespace text."
+    },
+    "host": {
+      "maxLength": 96,
+      "minLength": 1,
+      "title": "Host",
+      "type": "string",
+      "x-maxUtf8Bytes": 96,
+      "description": "Must contain non-whitespace text."
+    },
+    "state": {
+      "$ref": "#/$defs/AgentState"
+    },
+    "detail": {
+      "default": "",
+      "maxLength": 512,
+      "title": "Detail",
+      "type": "string",
+      "x-maxUtf8Bytes": 512
+    },
+    "timestamp": {
+      "minimum": 0,
+      "title": "Timestamp",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "host",
+    "state"
+  ],
+  "title": "AgentStatus",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Agent Monitor V1 status. Standard JSON Schema validates structure; x-maxUtf8Bytes and x-maxMqttPayloadBytes require the bridge validator. Missing detail defaults to empty text; missing timestamp defaults to server Unix seconds.",
+  "x-maxMqttPayloadBytes": 1024
+}

@@ -8,6 +8,12 @@ Read [INTEGRATION.md](../../INTEGRATION.md) and
 this skill with the checkout so those references remain available; when
 installing a copy elsewhere, retain a reference to the original checkout.
 
+Follow [AGENT_SETUP.md](../../AGENT_SETUP.md): first ask the user what to call
+this harness, wait for their answer, and use that exact value as `name` in every
+report. Ask for a shorter name if it exceeds 96 UTF-8 bytes; do not silently
+truncate or append a project/session suffix. Prefer native hooks/events when
+available; consider MCP/skill only without hooks or to fill uncovered states.
+
 Identify the installed harness, version, native session identifier and supported
 lifecycle events from local declarations/help or official documentation. Do not
 invent event names or borrow another harness's payload shapes. Inspect existing

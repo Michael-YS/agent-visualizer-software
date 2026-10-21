@@ -5,6 +5,12 @@ bridge's `app.models.AgentStatus`. Build the smallest native hook, plugin or
 extension for the installed harness. Existing [adapters](adapters/README.md)
 are optional reference implementations; they are not dependencies.
 
+For instructions that can be forwarded on their own, use [AGENT_SETUP.md](AGENT_SETUP.md).
+Ask the user what to call this harness before configuring reporting; preserve
+that confirmed value exactly in every `name` field. If it exceeds 96 UTF-8
+bytes, ask for a shorter name. Prefer native hooks/events; consider MCP or a
+skill when hooks are unavailable, or only to fill gaps in hook coverage.
+
 ## Status message
 
 Send one JSON object to `POST <bridge-base-url>/v1/agents/state` with

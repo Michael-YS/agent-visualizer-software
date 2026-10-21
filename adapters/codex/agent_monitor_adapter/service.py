@@ -79,6 +79,7 @@ class AdapterRuntime:
 
     async def publish_once(self) -> bool:
         """Publish each dirty or heartbeat-due session; return whether all succeeded."""
+        self.reducer.collect_expired()
         now = time.time()
         success = True
         for snapshot in self.reducer.snapshots():

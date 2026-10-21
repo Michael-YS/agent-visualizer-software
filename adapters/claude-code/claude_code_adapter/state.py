@@ -36,6 +36,8 @@ class _Session:
     detail: str = ""
     timestamp: int = field(default_factory=lambda: int(time.time()))
     revision: int = 0
+    last_activity: float = field(default_factory=time.monotonic)
+    offline_since: float | None = None
     source_pid: int | None = None
     source_create_time: float | None = None
     active_tools: set[str] = field(default_factory=set)
@@ -114,6 +116,13 @@ class SessionReducer:
 
     @staticmethod
     def _commit(session: _Session, state: str, detail: Any = None) -> None:
+        now = time.monotonic()
+        session.last_activity = now
+        if state == "offline":
+            if session.offline_since is None:
+                session.offline_since = now
+        else:
+            session.offline_since = None
         session.state = state
         if detail is not None:
             session.detail = _short(detail)
@@ -218,6 +227,21 @@ class SessionReducer:
             session.sticky_detail = str(payload.get("detail") or "") if session.sticky_wait else None
             self._commit(session, state, payload.get("detail", ""))
             return session.view()
+
+    def collect_expired(self, stale_seconds: float = 120,
+                        retention_seconds: float = 300) -> int:
+        """Expire unbound sessions and reclaim continuously offline records."""
+        with self._lock:
+            now = time.monotonic()
+            removed = 0
+            for key, session in list(self._sessions.items()):
+                if session.offline_since is not None:
+                    if now - session.offline_since >= retention_seconds:
+                        del self._sessions[key]
+                        removed += 1
+                elif (session.source_pid is None or session.source_create_time is None) and now - session.last_activity >= stale_seconds:
+                    self._commit(session, "offline", "Status updates timed out")
+            return removed
 
     def snapshots(self) -> tuple[Snapshot, ...]:
         with self._lock:

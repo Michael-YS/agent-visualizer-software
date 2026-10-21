@@ -2,6 +2,28 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { LatestPublisher, makeStatus, postStatus, utf8Limit } from "../dist/adapter.js";
 
+test("publisher frees drained session queues", async () => {
+  const publisher = new LatestPublisher(async () => {});
+  for (let i = 0; i < 100; i++) {
+    publisher.publish(makeStatus(String(i), "repo", "host", "offline"));
+  }
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(publisher.queues.size, 0);
+});
+
+test("publisher frees offline backlog after retention even when transport fails", async () => {
+  const publisher = new LatestPublisher(async () => { throw new Error("unavailable"); });
+  const payload = makeStatus("old", "repo", "host", "offline");
+  publisher.publish(payload);
+  await new Promise((resolve) => setImmediate(resolve));
+  const queue = publisher.queues.get(payload.id);
+  clearTimeout(queue.retryTimer);
+  queue.retryTimer = undefined;
+  queue.offlineSince = performance.now() - 300_000;
+  await publisher.drain(payload.id, queue);
+  assert.equal(publisher.queues.size, 0);
+});
+
 test("status identity is stable and string caps count complete UTF-8 bytes", () => {
   const first = makeStatus("native-session-12345678", "C:/work/repo", "host", "idle", "🧪".repeat(200));
   const second = makeStatus("native-session-12345678", "C:/other", "host", "thinking");

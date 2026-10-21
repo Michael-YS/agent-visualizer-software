@@ -50,6 +50,7 @@ interface PublishQueue {
   current?: AgentStatus;
   revision: number;
   sending: boolean;
+  offlineSince?: number;
   retryTimer?: ReturnType<typeof setTimeout>;
 }
 
@@ -65,17 +66,22 @@ export class LatestPublisher {
       this.queues.set(payload.id, queue);
     }
     queue.current = payload;
+    queue.offlineSince = payload.state === "offline" ? queue.offlineSince ?? performance.now() : undefined;
     queue.revision++;
     if (queue.retryTimer) clearTimeout(queue.retryTimer);
     queue.retryTimer = undefined;
-    void this.drain(queue);
+    void this.drain(payload.id, queue);
   }
 
-  private async drain(queue: PublishQueue): Promise<void> {
+  private async drain(id: string, queue: PublishQueue): Promise<void> {
     if (queue.sending) return;
     queue.sending = true;
     try {
       while (queue.current) {
+        if (queue.offlineSince !== undefined && performance.now() - queue.offlineSince >= 300_000) {
+          queue.current = undefined;
+          break;
+        }
         const revision = queue.revision;
         const snapshot = queue.current;
         try {
@@ -85,7 +91,7 @@ export class LatestPublisher {
           if (revision === queue.revision) {
             queue.retryTimer = setTimeout(() => {
               queue.retryTimer = undefined;
-              void this.drain(queue);
+              void this.drain(id, queue);
             }, 5000);
             queue.retryTimer.unref?.();
             break;
@@ -96,6 +102,7 @@ export class LatestPublisher {
       }
     } finally {
       queue.sending = false;
+      if (!queue.current && !queue.retryTimer) this.queues.delete(id);
     }
   }
 }

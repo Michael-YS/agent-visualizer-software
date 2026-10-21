@@ -61,6 +61,7 @@ class Runtime:
                 now - snapshot.last_published_at >= heartbeat)
 
     async def publish_once(self) -> bool:
+        self.reducer.collect_expired()
         now, success = time.time(), True
         for snapshot in self.reducer.snapshots():
             if not self._due(snapshot, now, self.settings.heartbeat_seconds):

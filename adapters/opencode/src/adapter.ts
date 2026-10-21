@@ -36,6 +36,7 @@ type SessionRecord = {
   errored: boolean;
   activeTools: Set<string>;
   pendingInputs: Set<string>;
+  offlineSince?: number;
 };
 
 export function truncateUtf8(value: string, maxBytes: number): string {
@@ -76,9 +77,21 @@ export class OpenCodeStateTracker {
   }
 
   getAttachedStatuses(): AgentStatus[] {
+    this.collectExpired();
     return [...this.sessions.values()]
       .filter((session) => session.status.state !== "offline")
       .map((session) => ({ ...session.status, timestamp: nowSeconds() }));
+  }
+
+  collectExpired(now = performance.now()): number {
+    let removed = 0;
+    for (const [id, session] of this.sessions) {
+      if (session.offlineSince !== undefined && now - session.offlineSince >= 300_000) {
+        this.sessions.delete(id);
+        removed++;
+      }
+    }
+    return removed;
   }
 
   process(event: OpenCodeEvent): AgentStatus | undefined {
@@ -242,6 +255,7 @@ export class OpenCodeStateTracker {
   }
 
   private commit(session: SessionRecord, state: AgentState, detail: string): AgentStatus {
+    session.offlineSince = state === "offline" ? session.offlineSince ?? performance.now() : undefined;
     session.status = {
       ...session.status,
       state,
@@ -259,6 +273,7 @@ function nowSeconds(): number {
 /** Serializes bridge writes and coalesces any backlog to the newest status. */
 export class LatestStatusPublisher {
   private readonly latest = new Map<string, AgentStatus>();
+  private readonly offlineSince = new Map<string, number>();
   private running = false;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -269,6 +284,11 @@ export class LatestStatusPublisher {
   ) {}
 
   offer(status: AgentStatus): void {
+    if (status.state === "offline") {
+      if (!this.offlineSince.has(status.id)) this.offlineSince.set(status.id, performance.now());
+    } else {
+      this.offlineSince.delete(status.id);
+    }
     this.latest.set(status.id, { ...status, timestamp: nowSeconds() });
     this.pump();
   }
@@ -280,6 +300,12 @@ export class LatestStatusPublisher {
 
   private pump(): void {
     if (this.running || this.retryTimer) return;
+    for (const [id, since] of this.offlineSince) {
+      if (performance.now() - since >= 300_000) {
+        this.latest.delete(id);
+        this.offlineSince.delete(id);
+      }
+    }
     const next = this.latest.entries().next();
     if (next.done) return;
     const [id, status] = next.value;
@@ -294,6 +320,7 @@ export class LatestStatusPublisher {
       })
       .finally(() => {
         this.running = false;
+        if (!this.latest.has(id)) this.offlineSince.delete(id);
         if (this.latest.size) {
           this.retryTimer = setTimeout(() => {
             this.retryTimer = undefined;

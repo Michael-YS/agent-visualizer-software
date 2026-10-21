@@ -13,3 +13,5 @@ class Settings(BaseSettings):
     mqtt_topic_prefix: str = "agent-monitor/v1"
     mqtt_username: str | None = None
     mqtt_password: str | None = None
+    agent_stale_seconds: float = Field(default=120, gt=0)
+    agent_offline_retention_seconds: float = Field(default=300, gt=0)

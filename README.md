@@ -31,6 +31,19 @@ Set `MQTT_HOST` in `.env` to the broker reachable by both this service and the
 ESP32. The service reconnects in the background and reports MQTT readiness at
 `GET /health`.
 
+The bridge marks agents offline after 120 seconds without an update and deletes
+their retained MQTT messages after five continuous minutes offline. Cleanup runs
+every second; failed MQTT writes are retried after reconnection. Incoming updates
+cancel pending reclamation. Repeated offline updates do not reset the timer.
+The bridge also reads retained messages on connection to reclaim old entries
+after a restart. Configure `AGENT_STALE_SECONDS` and
+`AGENT_OFFLINE_RETENTION_SECONDS` in `.env` to change these intervals.
+
+Codex and Claude Code adapters reclaim offline session records after five minutes;
+unbound sessions without updates first become offline after 120 seconds. Verified
+live process bindings continue to heartbeat. OpenCode reclaims offline sessions
+on its 30-second heartbeat sweep. Pi releases drained publication queues.
+
 ## Publish a state
 
 ```powershell

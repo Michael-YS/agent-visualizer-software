@@ -11,6 +11,35 @@ import * as pluginModule from "../dist/index.js";
 
 const ev = (type, properties) => ({ type, properties });
 
+test("offline sessions expire while attached and revived sessions survive", () => {
+  const tracker = new OpenCodeStateTracker("host");
+  tracker.process(ev("session.created", { info: { id: "old" } }));
+  tracker.process(ev("session.created", { info: { id: "live" } }));
+  tracker.process(ev("session.deleted", { info: { id: "old" } }));
+  const since = tracker.sessions.get("old").offlineSince;
+  assert.equal(tracker.collectExpired(since + 299_999), 0);
+  tracker.process(ev("session.deleted", { info: { id: "old" } }));
+  assert.equal(tracker.collectExpired(since + 300_000), 1);
+  assert.equal(tracker.sessions.size, 1);
+  assert.equal(tracker.getAttachedStatuses().length, 1);
+  tracker.process(ev("session.created", { info: { id: "old" } }));
+  tracker.process(ev("session.deleted", { info: { id: "old" } }));
+  tracker.process(ev("session.status", { sessionID: "old", status: { type: "busy" } }));
+  assert.equal(tracker.collectExpired(performance.now() + 300_000), 0);
+  assert.equal(tracker.sessions.size, 2);
+});
+
+test("publisher reclaims expired offline backlog during bridge failure", async () => {
+  const publisher = new LatestStatusPublisher("http://bridge", async () => ({ ok: false }));
+  publisher.offer({ id: "old", name: "old", host: "host", state: "offline", detail: "", timestamp: 0 });
+  await new Promise((resolve) => setImmediate(resolve));
+  publisher.close();
+  publisher.offlineSince.set("old", performance.now() - 300_000);
+  publisher.pump();
+  assert.equal(publisher.latest.size, 0);
+  assert.equal(publisher.offlineSince.size, 0);
+});
+
 test("build emits one OpenCode plugin function export", () => {
   assert.deepEqual(Object.keys(pluginModule), ["default"]);
   assert.equal(typeof pluginModule.default, "function");

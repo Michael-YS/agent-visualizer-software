@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-monitor-claude-adapter"
+version = "0.1.0"
+description = "Standalone Claude Code hooks adapter for the Agent Monitor bridge"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
+  "psutil>=6,<8",
+  "uvicorn[standard]>=0.30,<1",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.3,<9"]
+
+[project.scripts]
+agent-monitor-claude-adapter = "claude_code_adapter.service:main"
+agent-monitor-claude-hook = "claude_code_adapter.hook:main"
+agent-monitor-claude-report = "claude_code_adapter.report:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["claude_code_adapter"]
+
+[tool.pytest.ini_options]
+addopts = "-p no:cacheprovider"
+testpaths = ["tests"]

@@ -1,0 +1,105 @@
+{
+  "description": "Forward Codex lifecycle events to the local Agent Monitor adapter.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agent_monitor_adapter.codex_hook",
+            "commandWindows": "python -m agent_monitor_adapter.codex_hook",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agent_monitor_adapter.codex_hook",
+            "commandWindows": "python -m agent_monitor_adapter.codex_hook",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agent_monitor_adapter.codex_hook",
+            "commandWindows": "python -m agent_monitor_adapter.codex_hook",
+            "async": true,
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agent_monitor_adapter.codex_hook",
+            "commandWindows": "python -m agent_monitor_adapter.codex_hook",
+            "async": true,
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agent_monitor_adapter.codex_hook",
+            "commandWindows": "python -m agent_monitor_adapter.codex_hook",
+            "async": true,
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agent_monitor_adapter.codex_hook",
+            "commandWindows": "python -m agent_monitor_adapter.codex_hook",
+            "async": true,
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Interrupt": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agent_monitor_adapter.codex_hook",
+            "commandWindows": "python -m agent_monitor_adapter.codex_hook",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agent_monitor_adapter.codex_hook",
+            "commandWindows": "python -m agent_monitor_adapter.codex_hook",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}

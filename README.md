@@ -1,12 +1,20 @@
-# Agent Monitor Bridge
+# Agent Monitor Software
 
 Small agent-agnostic service that accepts normalized status events over HTTP
 and publishes retained MQTT messages for the ESP32 monitor.
 
+## Repository layout
+
+- `app/`, `tests/`, and `pyproject.toml`: HTTP-to-MQTT bridge.
+- [adapters/](adapters/README.md): independently installable harness adapters.
+
+Firmware, wiring and the device plan live in `agent-visualizer-hardware`.
+Each repository builds independently and communicates through the MQTT topic
+and status payload below. Run bridge commands from this repository root.
+
 ## Run locally
 
 ```powershell
-cd software
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[test]"
 Copy-Item .env.example .env

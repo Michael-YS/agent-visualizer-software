@@ -1,0 +1,20 @@
+{
+  "name": "agent-monitor-local",
+  "interface": {
+    "displayName": "Agent Monitor Local"
+  },
+  "plugins": [
+    {
+      "name": "agent-monitor-codex",
+      "source": {
+        "source": "local",
+        "path": "./codex-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

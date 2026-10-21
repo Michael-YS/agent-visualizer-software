@@ -1,0 +1,16 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "agent-monitor-codex",
+  "version": "0.1.0",
+  "description": "Report Codex session status to the Agent Monitor display.",
+  "extensions": {
+    "com.openai": {
+      "hooks": "./hooks/hooks.json",
+      "interface": {
+        "displayName": "Agent Monitor",
+        "shortDescription": "Show Codex session status on Agent Monitor.",
+        "longDescription": "Reports meaningful Codex session status changes to a local Agent Monitor adapter."
+      }
+    }
+  }
+}

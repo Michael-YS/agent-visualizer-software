@@ -1,0 +1,6 @@
+{
+  "name": "agent-monitor-claude-code",
+  "version": "0.1.0",
+  "description": "Reports Claude Code session lifecycle to Agent Monitor",
+  "hooks": "./hooks/hooks.json"
+}

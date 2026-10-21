@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-monitor-adapter"
+version = "0.1.0"
+description = "Codex adapter for the Agent Monitor bridge"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
+  "mcp>=1.13,<2",
+  "psutil>=6,<8",
+  "python-dotenv>=1,<2",
+  "uvicorn[standard]>=0.30,<1",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.3,<9",
+]
+
+[project.scripts]
+agent-monitor-adapter = "agent_monitor_adapter.service:main"
+agent-monitor-codex-hook = "agent_monitor_adapter.codex_hook:main"
+agent-monitor-mcp = "agent_monitor_adapter.mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent_monitor_adapter"]
+
+[tool.pytest.ini_options]
+addopts = "-p no:cacheprovider"
+testpaths = ["tests"]

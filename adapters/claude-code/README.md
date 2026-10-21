@@ -13,7 +13,7 @@ python -m pip install -e ".[test]"
 agent-monitor-claude-adapter
 ```
 
-Install the hook configuration either by enabling the plugin from this directory with `claude --plugin-dir D:\code\agent-visualizer-software\adapters\claude-code\plugin`, or by merging [`settings.example.json`](settings.example.json) into your user or project `.claude/settings.json`. The hook command must be available on `PATH` in Claude Code's environment. Plugin hook registration lives under [`plugin/hooks/hooks.json`](plugin/hooks/hooks.json). The settings-only installation does not load plugin skills; to use the optional report workflow, copy [`plugin/skills/report-status/SKILL.md`](plugin/skills/report-status/SKILL.md) into `~/.claude/skills/report-status/SKILL.md`.
+Install the hook configuration either by enabling the plugin from this directory with `claude --plugin-dir D:\code\agent-visualizer\agent-visualizer-software\adapters\claude-code\plugin`, or by merging [`settings.example.json`](settings.example.json) into your user or project `.claude/settings.json`. The hook command must be available on `PATH` in Claude Code's environment. Plugin hook registration lives under [`plugin/hooks/hooks.json`](plugin/hooks/hooks.json). The settings-only installation does not load plugin skills; to use the optional report workflow, copy [`plugin/skills/report-status/SKILL.md`](plugin/skills/report-status/SKILL.md) into `~/.claude/skills/report-status/SKILL.md`.
 
 Configuration environment variables:
 

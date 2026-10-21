@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Monitor · 运行状态</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/dashboard.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <div><p class="eyebrow">AGENT MONITOR / LIVE</p><h1>Agent 运行状态</h1><p class="subtitle">查看各个 agent 的当前活动与需要关注的事项</p></div>
+      <a href="/docs">API 文档 ↗</a>
+    </header>
+    <div class="connection" role="status" aria-live="polite"><span id="connection">正在连接服务…</span><span id="updated">每 2 秒自动刷新</span></div>
+    <section class="metrics" aria-label="状态概览">
+      <div><span>全部 agent</span><strong id="total">—</strong></div>
+      <div><span>运行中</span><strong id="active">—</strong></div>
+      <div><span>需要关注</span><strong id="attention">—</strong></div>
+      <div><span>离线</span><strong id="offline">—</strong></div>
+    </section>
+    <section class="agents" aria-label="Agent 列表">
+      <div class="toolbar"><h2>当前活动</h2><div class="filters"><input id="search" type="search" aria-label="搜索 agent" placeholder="搜索名称、主机或 ID"><select id="state" aria-label="按状态筛选"><option value="">全部状态</option><option value="thinking">思考中</option><option value="tool_running">执行工具</option><option value="needs_input">等待输入</option><option value="error">错误</option><option value="idle">空闲</option><option value="turn_complete">本轮完成</option><option value="offline">离线</option></select></div></div>
+      <p id="error" class="error" role="alert" hidden></p>
+      <p id="empty" class="empty">正在读取 agent 状态…</p>
+      <div id="cards" class="cards"></div>
+    </section>
+    <footer><span>运行中 = 思考中 / 执行工具 · 需要关注 = 等待输入 / 错误</span><span>数据来源：当前服务的状态快照</span></footer>
+  </main>
+</body>
+</html>

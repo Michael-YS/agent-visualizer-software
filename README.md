@@ -44,6 +44,30 @@ unbound sessions without updates first become offline after 120 seconds. Verifie
 live process bindings continue to heartbeat. OpenCode reclaims offline sessions
 on its 30-second heartbeat sweep. Pi releases drained publication queues.
 
+## View current agent status
+
+Open `http://localhost:8000/` for the Web UI. It refreshes every two seconds,
+shows activity counts and MQTT connectivity, and supports searching by name,
+host or ID and filtering by state. Errors and agents waiting for input appear
+first. No separate frontend install or build is required.
+
+Read-only JSON endpoints (also documented at `http://localhost:8000/docs`):
+
+- `GET /v1/agents`: returns `agents`, `total`, and `mqtt_connected`.
+- `GET /v1/agents/{agent_id}`: returns one status, or HTTP 404 if unknown.
+
+```powershell
+Invoke-RestMethod http://localhost:8000/v1/agents
+Invoke-RestMethod http://localhost:8000/v1/agents/codex-m3u8
+```
+
+Each status contains `id`, `name`, `host`, `state`, `detail`, and `timestamp`
+(Unix seconds). Reads share the bridge's in-memory registry, including recovered
+retained MQTT entries, timeout transitions and offline cleanup. With MQTT down,
+reads remain available with the last known data; the UI displays a warning.
+Retained entries are recovered after connecting to the broker on restart.
+Run one Uvicorn worker so reporting and queries share the same registry.
+
 ## Publish a state
 
 ```powershell

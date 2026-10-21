@@ -44,6 +44,12 @@ class MqttPublisher:
     def is_connected(self) -> bool:
         return self._connected.is_set()
 
+    def snapshot(self) -> list[AgentStatus]:
+        """Return an isolated, consistently ordered view of tracked agents."""
+        with self._lock:
+            return [self._agents[key].status.model_copy(deep=True)
+                    for key in sorted(self._agents)]
+
     def start(self) -> None:
         self._stopping.clear()
         self._client.connect_async(

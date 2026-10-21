@@ -77,3 +77,9 @@ class PublishResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     mqtt_connected: bool
+
+
+class AgentListResponse(BaseModel):
+    agents: list[AgentStatus]
+    total: int
+    mqtt_connected: bool

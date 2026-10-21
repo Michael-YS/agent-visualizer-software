@@ -23,7 +23,7 @@ Send one JSON object to `POST <bridge-base-url>/v1/agents/state` with
   "name": "Agent / project",
   "host": "desktop",
   "state": "needs_input",
-  "detail": "Waiting for a user decision",
+  "detail": "Fix login timeout: waiting for retry policy confirmation",
   "timestamp": 1792530000
 }
 ```
@@ -31,6 +31,17 @@ Send one JSON object to `POST <bridge-base-url>/v1/agents/state` with
 `id`, `name`, `host`, and `state` are required. Omitted `detail` becomes `""`;
 omitted `timestamp` becomes the bridge's current Unix time in seconds. Send a
 fresh timestamp on each update and heartbeat. Extra fields are rejected.
+
+For integrations, `detail` must include an agent-written task summary and current
+progress whenever a task exists, for example `Fix login timeout: checking retries`.
+Keep `name` as the user-confirmed harness name. Cache the summary per session,
+retain it through tool/wait/heartbeat/completion updates, and replace it when a
+new task begins. Native events must not overwrite it with a generic label.
+When hooks cannot obtain a safe summary, let the agent supply it once at task
+start or a change of objective through a small local interface or MCP/skill;
+hooks still drive lifecycle updates. Summarize the task purpose without copying
+raw prompts or sensitive content. With no task, a plain waiting label is fine.
+Keep within existing byte limits; do not add a new protocol field.
 
 Use a stable ID derived from host identity, harness name and native session ID,
 for example `<harness>-<sha256(host|harness|session)[:20]>`. It must match

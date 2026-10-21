@@ -14,6 +14,14 @@ report. Ask for a shorter name if it exceeds 96 UTF-8 bytes; do not silently
 truncate or append a project/session suffix. Prefer native hooks/events when
 available; consider MCP/skill only without hooks or to fill uncovered states.
 
+Require `detail` to contain an agent-written task summary plus current progress
+while a task exists. Cache it per session so tool callbacks and heartbeats keep
+the summary; retain it with the outcome on completion and replace it for a new
+task. If hooks lack this context, have the agent supply a safe summary at task
+start or objective changes through a local interface or MCP/skill, without
+replacing hook-driven lifecycle updates. Do not copy raw prompts, change `name`,
+add protocol fields, or report only generic labels such as "Working".
+
 Identify the installed harness, version, native session identifier and supported
 lifecycle events from local declarations/help or official documentation. Do not
 invent event names or borrow another harness's payload shapes. Inspect existing

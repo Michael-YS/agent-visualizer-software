@@ -360,6 +360,21 @@ class SessionReducer:
                     return session.view()
             return None
 
+    def update_title(self, session_id: str, title: str) -> None:
+        """Update display metadata without changing activity or turn state."""
+        with self._lock:
+            for session in self._sessions.values():
+                if session.session_id != session_id:
+                    continue
+                prefix = "Codex / "
+                suffix = f" / {session_id[-8:]}"
+                name = prefix + truncate_utf8(
+                    title, MAX_NAME_BYTES - len((prefix + suffix).encode("utf-8"))
+                ) + suffix
+                if session.name != name:
+                    session.name = name
+                    session.revision += 1
+
     def collect_expired(self, stale_seconds: float = 120,
                         retention_seconds: float = 300) -> int:
         """Expire unbound sessions and reclaim continuously offline records."""

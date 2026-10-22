@@ -15,6 +15,16 @@ Hooks provide automatic execution state. The MCP tool lets the agent attach a
 short task-level explanation or explicitly report `needs_input` and `error`.
 Both paths use the same native session ID and reducer.
 
+The adapter reads each session's `thread_name` from the local
+`$CODEX_HOME/session_index.jsonl` (default: `~/.codex/session_index.jsonl`).
+Monitor names use `Codex / <chat title> / <short session ID>`, so the bridge's
+Web UI, read API and ESP32 all show the same title. Names stay within 96 UTF-8
+bytes. Renames are picked up on the next publication sweep, normally within
+two seconds. Until a title is available, names retain the project-name fallback.
+Missing or unreadable indexes do not interrupt status reporting; an already
+known title is retained. Run the adapter as the same user as Codex, or set
+`CODEX_HOME` to that user's Codex data directory.
+
 ## Install and run
 
 Install into the `python` interpreter visible to Codex. A user install is the
@@ -77,7 +87,8 @@ therefore injects `monitor_session_id` into the agent context, and the skill
 passes that exact value to `report_status`. MCP-only callers must supply a real
 session ID explicitly; the adapter never guesses from the working directory.
 
-The adapter does not send prompts, full commands, or tool output. Display text
+The adapter sends chat titles but does not read transcripts or send full commands
+or tool output. A title can contain text derived from a prompt. Display text
 is truncated to the firmware's UTF-8 byte limits.
 
 ## Test

@@ -22,6 +22,15 @@ start or objective changes through a local interface or MCP/skill, without
 replacing hook-driven lifecycle updates. Do not copy raw prompts, change `name`,
 add protocol fields, or report only generic labels such as "Working".
 
+For Codex, follow the title instructions in AGENT_SETUP.md: look up the native
+session ID's `thread_name` in `$CODEX_HOME/session_index.jsonl` (default
+`~/.codex/`), after verifying the installed format. Keep the user-confirmed
+`name` unchanged; add a safe title to `detail` alongside the current task summary
+and progress. Handle missing/unreadable indexes, incomplete records and renames
+without altering identity, activity timers or lifecycle state. The reference
+Codex adapter uses an automatic title-based `name`; adjust that mapping before
+using it for this fixed-name contract. Do not add a `title` protocol field.
+
 Identify the installed harness, version, native session identifier and supported
 lifecycle events from local declarations/help or official documentation. Do not
 invent event names or borrow another harness's payload shapes. Inspect existing
@@ -46,3 +55,9 @@ failure, shutdown and receiver unavailability. Use a separate disposable session
 ID for live smoke tests and finish it with `offline`. Summarize installation,
 removal and the exact checks completed; distinguish simulated callbacks from
 real harness execution and MQTT/hardware verification.
+
+Verify published snapshots using the Web UI at `/` or `GET /v1/agents` and
+`GET /v1/agents/{agent_id}`; use the protocol ID for the single-agent query.
+Check `mqtt_connected` because reads may return last-known data during an
+outage. For Codex, also verify title discovery, renames and unavailable indexes
+while preserving the confirmed name and task summary.

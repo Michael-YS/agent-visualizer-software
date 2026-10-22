@@ -43,6 +43,17 @@ hooks still drive lifecycle updates. Summarize the task purpose without copying
 raw prompts or sensitive content. With no task, a plain waiting label is fine.
 Keep within existing byte limits; do not add a new protocol field.
 
+For Codex, session titles can be read by native session ID from `thread_name`
+in the local `$CODEX_HOME/session_index.jsonl` (default `~/.codex/`). Verify the
+installed version's index format. For generated integrations, keep the confirmed
+`name` unchanged and append a display-safe title to `detail` alongside the task
+summary and progress. Missing/unreadable indexes and partial records must not
+interrupt reporting. Pick up renames without changing identity or lifecycle.
+See [the standalone Codex instructions](AGENT_SETUP.md#codex补充会话标题) for
+fallback and verification requirements. The reference Codex adapter instead
+uses titles in its automatic `name`; adapt that mapping before reusing it for
+the fixed-name onboarding contract. Never add a `title` protocol field.
+
 Use a stable ID derived from host identity, harness name and native session ID,
 for example `<harness>-<sha256(host|harness|session)[:20]>`. It must match
 `^[A-Za-z0-9][A-Za-z0-9._-]*$` and be at most 96 characters. Keep it across a
@@ -100,6 +111,13 @@ same session ID; the reporting tool must not overwrite its own reported state.
   arguments, output, credentials or raw provider error messages into detail.
 
 ## Generate and verify an integration
+
+Inspect accepted snapshots through the Web UI at `/` (two-second refresh),
+`GET /v1/agents` (`agents`, `total`, `mqtt_connected`), or
+`GET /v1/agents/{agent_id}` (the protocol ID; 404 if absent). API documentation
+is at `/docs`. Reads remain available with last-known data during MQTT outages;
+check `mqtt_connected` and do not treat HTTP success as proof of current data
+or hardware delivery. Use one Uvicorn worker to share the in-memory registry.
 
 Use [the integration skill](skills/integrate-agent-monitor/SKILL.md) with an
 agent operating in the target harness. Inspect the installed harness version

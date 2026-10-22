@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException, status
 from agent_monitor_adapter.client import BridgeClient, BridgeUnavailable
 from agent_monitor_adapter.config import AdapterSettings
 from agent_monitor_adapter.state import SessionReducer, SessionSnapshot
+from agent_monitor_adapter.titles import SessionTitles
 
 
 def _process_matches(pid: int, created_at: float) -> bool:
@@ -38,11 +39,13 @@ class AdapterRuntime:
         reducer: SessionReducer,
         bridge: BridgeClient,
         process_matches: Callable[[int, float], bool] = _process_matches,
+        titles: SessionTitles | None = None,
     ) -> None:
         self.settings = settings
         self.reducer = reducer
         self.bridge = bridge
         self.process_matches = process_matches
+        self.titles = titles if titles is not None else SessionTitles()
         self._changed = asyncio.Event()
         self._stopping = asyncio.Event()
         self._tasks: list[asyncio.Task[None]] = []
@@ -80,6 +83,11 @@ class AdapterRuntime:
     async def publish_once(self) -> bool:
         """Publish each dirty or heartbeat-due session; return whether all succeeded."""
         self.reducer.collect_expired()
+        titles = self.titles.read()
+        for snapshot in self.reducer.snapshots():
+            title = titles.get(snapshot.session_id)
+            if title:
+                self.reducer.update_title(snapshot.session_id, title)
         now = time.time()
         success = True
         for snapshot in self.reducer.snapshots():

@@ -81,7 +81,7 @@ def test_report_attention_state_stays_through_hooks_until_user_prompt(state: str
     reported = reducer.ingest_report({"session_id": "native-session-123456", "state": state, "detail": "等待用户" * 200})
     assert reported.state == state
     assert len(reported.detail.encode("utf-8")) <= 512
-    reducer.ingest_hook(hook("PreToolUse", tool_name="shell", tool_call_id="x"))
+    assert reducer.ingest_hook(hook("PreToolUse", tool_name="shell", tool_call_id="x")).state == state
     assert reducer.ingest_hook(hook("PostToolUse", tool_call_id="x")).state == state
     assert reducer.ingest_hook(hook("Stop")).state == state
     assert reducer.ingest_hook(hook("UserPromptSubmit")).state == "thinking"
@@ -90,13 +90,47 @@ def test_report_attention_state_stays_through_hooks_until_user_prompt(state: str
 
 def test_permission_and_invalid_inputs() -> None:
     reducer = SessionReducer()
-    assert reducer.ingest_hook(hook("PermissionRequest")).state == "needs_input"
-    assert reducer.ingest_hook(hook("Stop")).state == "needs_input"
+    assert reducer.ingest_hook(hook("PermissionRequest", approvals_reviewer="user")).state == "needs_input"
+    assert reducer.ingest_hook(hook("Stop")).state == "turn_complete"
     assert reducer.ingest_hook(hook("PostToolUse", tool_use_id="approved")).state == "thinking"
     with pytest.raises(ValueError):
         reducer.ingest_report({"session_id": "s", "state": "running"})
     with pytest.raises(ValueError):
         reducer.ingest_hook({"hook_event_name": "Stop"})
+
+
+@pytest.mark.parametrize("reviewer", ["auto_review", "guardian_subagent", None])
+def test_nonhuman_or_unknown_approval_does_not_request_attention(reviewer) -> None:
+    reducer = SessionReducer()
+    reducer.ingest_hook(hook("UserPromptSubmit", turn_id="t"))
+    reducer.ingest_hook(hook("PreToolUse", turn_id="t", tool_use_id="a"))
+    snapshot = reducer.ingest_hook(hook("PermissionRequest", turn_id="t", approvals_reviewer=reviewer))
+    assert snapshot.state == "tool_running"
+    assert reducer.ingest_hook(hook("Stop", turn_id="t")).state == "turn_complete"
+
+
+def test_approval_route_is_cached_only_for_current_turn() -> None:
+    reducer = SessionReducer()
+    reducer.ingest_hook(hook("UserPromptSubmit", turn_id="manual", approvals_reviewer="user"))
+    assert reducer.ingest_hook(hook("PermissionRequest", turn_id="manual")).state == "needs_input"
+    reducer.ingest_hook(hook("UserPromptSubmit", turn_id="unknown"))
+    assert reducer.ingest_hook(hook("PermissionRequest", turn_id="unknown")).state == "thinking"
+
+
+def test_review_route_can_arrive_late_or_switch_to_human() -> None:
+    reducer = SessionReducer()
+    reducer.ingest_hook(hook("UserPromptSubmit", turn_id="t"))
+    assert reducer.ingest_hook(hook("PermissionRequest", turn_id="t")).state == "thinking"
+    assert reducer.ingest_hook(hook("PermissionRequest", turn_id="t", approvals_reviewer="auto_review")).state == "thinking"
+    assert reducer.ingest_hook(hook("PermissionRequest", turn_id="t", approvals_reviewer="user")).state == "needs_input"
+
+
+def test_auto_review_preserves_explicit_question_and_error() -> None:
+    for state in ("needs_input", "error"):
+        reducer = SessionReducer()
+        reducer.ingest_report({"session_id": "native-session-123456", "state": state})
+        assert reducer.ingest_hook(hook("PermissionRequest", approvals_reviewer="auto_review")).state == state
+        assert reducer.ingest_hook(hook("Stop")).state == state
 
 
 def test_completed_tool_tombstone_prevents_late_pre_event() -> None:

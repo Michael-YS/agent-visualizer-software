@@ -31,6 +31,20 @@ without altering identity, activity timers or lifecycle state. The reference
 Codex adapter uses an automatic title-based `name`; adjust that mapping before
 using it for this fixed-name contract. Do not add a `title` protocol field.
 
+For every harness with automatic approval, distinguish human approval from
+automatic review. An approval request alone must not produce `needs_input`:
+confirm that a person must act. Policy engines and approval agents remain work
+in progress; unknown routing is not a human wait. Recheck later events and
+report waiting when review is handed to a person. Verify each harness's actual
+routing fields and resolution events against its installed version.
+
+For example, Codex's `PermissionRequest` alone must not produce `needs_input`.
+Confirm human routing (`approvals_reviewer=user`); automatic review
+(`auto_review` / `guardian_subagent`) remains working state. Unknown routing
+must not imply a human wait. Scope any fallback metadata to the current turn,
+without retaining transcript bodies. Clear tool permission waits at `Stop`
+while preserving explicit questions and errors.
+
 Identify the installed harness, version, native session identifier and supported
 lifecycle events from local declarations/help or official documentation. Do not
 invent event names or borrow another harness's payload shapes. Inspect existing

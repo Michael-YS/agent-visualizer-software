@@ -72,7 +72,8 @@ It was developed against `codex-cli 0.155.0-alpha.16.4`.
 | Session start or resume | `idle` |
 | User prompt | `thinking` |
 | Tool start | `tool_running` |
-| Permission request | `needs_input` |
+| Confirmed human approval request | `needs_input` |
+| Automatic approval review or unknown routing | `tool_running` / `thinking` |
 | Turn stop | `turn_complete` |
 | Interrupt | `idle` |
 | Session end or source process exit | `offline` |
@@ -87,8 +88,18 @@ therefore injects `monitor_session_id` into the agent context, and the skill
 passes that exact value to `report_status`. MCP-only callers must supply a real
 session ID explicitly; the adapter never guesses from the working directory.
 
-The adapter sends chat titles but does not read transcripts or send full commands
-or tool output. A title can contain text derived from a prompt. Display text
+Approval routing uses `approvals_reviewer` when supplied by the hook. Otherwise,
+the hook reads matching current-turn `turn_context` metadata from the last 2 MiB
+of `transcript_path`. Only recognized reviewer values are added to the event;
+transcript bodies are not cached. The transcript format is not a stable hook
+interface: missing, unreadable or changed metadata keeps working state and is
+retried on the next permission event. Reviewer caches are scoped to the current
+turn. `user` means human approval; `auto_review` and `guardian_subagent` mean
+automatic review. Turn stop clears tool permission waits, including denied calls
+without a completion callback, while preserving explicit human questions/errors.
+
+The adapter sends chat titles but does not send full commands
+or tool output to the bridge. A title can contain text derived from a prompt. Display text
 is truncated to the firmware's UTF-8 byte limits.
 
 ## Test

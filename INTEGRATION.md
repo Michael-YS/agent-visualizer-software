@@ -74,7 +74,7 @@ to enforce byte, blank-value and total-message constraints.
 | `idle` | Session attached and waiting for a new request, or deliberately interrupted/paused |
 | `thinking` | A request is being processed outside tool execution |
 | `tool_running` | At least one tracked tool call is running |
-| `needs_input` | Confirmed approval request or explicit task-level request for a human answer |
+| `needs_input` | Confirmed need for human approval or explicit task-level request for a human answer |
 | `turn_complete` | Current agent turn ended successfully; session may remain open |
 | `error` | Confirmed model/request failure or explicit task-level failure |
 | `offline` | Session closed or its verified source process exited |
@@ -88,6 +88,22 @@ waits or task errors until genuinely resolved or a new user request begins;
 routine tool callbacks must not erase them. A skill/MCP/tool may report the
 same contract when hooks cannot infer task meaning. Both paths must use the
 same session ID; the reporting tool must not overwrite its own reported state.
+
+For every harness that supports automatic approval, distinguish human approval
+from automated review. An approval-request event alone is not evidence that a
+person must act. Policy engines and approval agents remain work in progress;
+unknown routing must not imply human attention. Recheck routing on later events
+and enter `needs_input` when review is actually handed to a person. Verify the
+installed harness's own routing fields, events and resolution signals rather
+than assuming another harness's schema applies.
+
+For example, Codex's `PermissionRequest` alone is not evidence of a human wait. Distinguish
+`approvals_reviewer=user` from `auto_review` / `guardian_subagent`; automatic
+review remains work in progress. Unknown routing must not imply human attention.
+If transcript metadata is used as a fallback, scope it to the current turn,
+handle delayed/missing/changed records, and never retain transcript bodies.
+At `Stop`, clear tool permission waits while preserving explicit questions and
+task errors.
 
 ## Delivery and lifecycle
 

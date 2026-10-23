@@ -67,6 +67,7 @@ class _Session:
     turn_number: int = 0
     sticky_state: str | None = None
     sticky_source: str | None = None
+    approval_reviewer: str | None = None
     source_pid: int | None = None
     source_create_time: float | None = None
     last_published_at: float | None = None
@@ -236,6 +237,12 @@ class SessionReducer:
                     return session.view()
                 session.active_tool_ids.clear()
                 session.completed_tool_ids.clear()
+                session.approval_reviewer = None
+            if event == "UserPromptSubmit" and turn is None:
+                session.approval_reviewer = None
+            reviewer = payload.get("approvals_reviewer")
+            if isinstance(reviewer, str) and reviewer in {"user", "auto_review", "guardian_subagent"}:
+                session.approval_reviewer = reviewer
             if turn is not None:
                 session.current_turn = turn
             session.latest_event_ns = max(session.latest_event_ns, emitted_at)
@@ -271,6 +278,7 @@ class SessionReducer:
             if event == "SessionStart":
                 if payload.get("source") == "compact":
                     return session.view()
+                session.approval_reviewer = None
                 self._commit(session, "idle", "Session started or resumed")
             elif event == "UserPromptSubmit":
                 session.turn_number += 1
@@ -289,7 +297,8 @@ class SessionReducer:
                     if call_id in session.completed_tool_ids:
                         return session.view()
                     session.active_tool_ids.add(call_id)
-                self._commit(session, "tool_running", payload.get("tool_name") or "Running tool")
+                self._commit(session, session.sticky_state or "tool_running",
+                             None if session.sticky_state else payload.get("tool_name") or "Running tool")
             elif event == "PostToolUse":
                 if _is_adapter_tool(payload.get("tool_name")):
                     return session.view()
@@ -307,6 +316,14 @@ class SessionReducer:
                 else:
                     self._commit(session, "thinking", "Working on request")
             elif event == "PermissionRequest":
+                if session.sticky_source == "report":
+                    return session.view()
+                if session.approval_reviewer != "user":
+                    session.sticky_state = None
+                    session.sticky_source = None
+                    self._commit(session, "tool_running" if session.active_tool_ids else "thinking",
+                                 "Approval review in progress")
+                    return session.view()
                 session.sticky_state = "needs_input"
                 session.sticky_source = "hook"
                 tool_input = payload.get("tool_input")
@@ -323,6 +340,10 @@ class SessionReducer:
             elif event == "Stop":
                 if turn is not None:
                     session.completed_turns.add(turn)
+                session.active_tool_ids.clear()
+                if session.sticky_source == "hook":
+                    session.sticky_state = None
+                    session.sticky_source = None
                 if session.sticky_state:
                     self._commit(session, session.sticky_state)
                 else:

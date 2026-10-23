@@ -6,9 +6,41 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 import psutil
+
+
+def _approval_reviewer(event: dict[str, Any]) -> str | None:
+    """Read only current-turn routing when the hook omits this metadata."""
+    known = {"user", "auto_review", "guardian_subagent"}
+    reviewer = event.get("approvals_reviewer")
+    if isinstance(reviewer, str) and reviewer in known:
+        return reviewer
+    turn = event.get("turn_id")
+    transcript = event.get("transcript_path")
+    if not turn or not isinstance(transcript, str) or not transcript:
+        return None
+    try:
+        with Path(transcript).open("rb") as handle:
+            handle.seek(max(0, handle.seek(0, 2) - 2 * 1024 * 1024))
+            for line in reversed(handle.readlines()):
+                if b'"turn_context"' not in line[:160]:
+                    continue
+                try:
+                    item = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(item, dict) or item.get("type") != "turn_context":
+                    continue
+                data = item.get("payload")
+                if isinstance(data, dict) and data.get("turn_id") == turn:
+                    reviewer = data.get("approvals_reviewer")
+                    return reviewer if isinstance(reviewer, str) and reviewer in known else None
+    except OSError:
+        pass
+    return None
 
 
 def _codex_process() -> tuple[int | None, float | None]:
@@ -78,6 +110,10 @@ def main() -> None:
         return
     if not isinstance(event, dict):
         return
+    if event.get("hook_event_name") in {"UserPromptSubmit", "PermissionRequest"}:
+        reviewer = _approval_reviewer(event)
+        if reviewer:
+            event["approvals_reviewer"] = reviewer
     _submit(event)
     context = _session_context(event)
     if context is not None:
